@@ -1,0 +1,40 @@
+name: Terraform Destroy Specific EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource:
+        description: 'Terraform resource to destroy'
+        required: true
+        default: 'aws_instance.demo'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  destroy-specific-ec2:
+    runs-on: ubuntu-latest
+    environment: destroy
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform init
+
+      - name: Destroy Specific EC2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_TARGET: ${{ github.event.inputs.resource }}
+        run: terraform destroy -target=${TF_TARGET} -auto-approve
