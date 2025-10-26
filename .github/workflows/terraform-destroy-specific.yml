@@ -15,7 +15,7 @@ permissions:
 jobs:
   destroy-specific-ec2:
     runs-on: ubuntu-latest
-    environment: destroy
+    #environment: destroy
 
     steps:
       - name: Checkout repo
