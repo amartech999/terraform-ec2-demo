@@ -1,4 +1,4 @@
-name: Terraform Destroy Specific EC2
+name: Terraform Destroy Specific EC 2
 
 on:
   workflow_dispatch:
