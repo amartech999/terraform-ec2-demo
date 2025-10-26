@@ -1,14 +1,39 @@
-name: Terraform CI/CD
+name: Terraform CI/CD with Approval
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  terraform:
-    name: Terraform Apply
+  terraform-plan:
+    name: Terraform Plan
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+  terraform-apply:
+    name: Terraform Apply (with Approval)
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    environment: production     # 👈 requires approval before this job runs
 
     steps:
       - name: Checkout repo
