@@ -41,7 +41,8 @@ jobs:
           name: terraform-plan
           path: tfplan
 
-      - name: Upload state file
+      - name: Upload Terraform state
+        # Upload the state file as artifact so next job can access it
         uses: actions/upload-artifact@v4
         with:
           name: terraform-state
@@ -57,12 +58,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Download Terraform artifacts
+      - name: Download Terraform plan artifact
         uses: actions/download-artifact@v4
         with:
           name: terraform-plan
           path: .
-      - uses: actions/download-artifact@v4
+
+      - name: Download Terraform state artifact
+        uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: .
@@ -81,7 +84,7 @@ jobs:
       - name: Check EC2 Count
         id: ec2-check
         run: |
-          echo "Parsing Terraform state to count EC2 instances..."
+          echo "Counting EC2 instances from state..."
           COUNT=$(terraform show -json terraform.tfstate | jq '[.values.root_module.resources[] | select(.type=="aws_instance")] | length')
           echo "Found $COUNT EC2 instances"
           echo "ec2_count=$COUNT" >> $GITHUB_OUTPUT
@@ -95,7 +98,7 @@ jobs:
 
       - name: Skip Apply if >2 EC2
         if: ${{ steps.ec2-check.outputs.ec2_count > 2 }}
-        run: echo "More than 2 EC2 instances exist. Skipping apply. Destroy will be triggered."
+        run: echo "More than 2 EC2 instances exist. Apply skipped. Destroy will be triggered."
 
   terraform-destroy:
     name: Terraform Destroy (Conditional)
@@ -108,7 +111,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Download Terraform state
+      - name: Download Terraform state artifact
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
